@@ -6,10 +6,25 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { BRAND } from "@/lib/brand";
 
+/**
+ * Resolve the canonical origin for OG / Twitter card URLs.
+ *
+ * Priority:
+ *   1. Explicit override (set once you own a real domain).
+ *   2. Vercel's stable production URL (auto-injected on every deploy).
+ *   3. Vercel's per-deployment URL (for preview deploys).
+ *   4. localhost for `next dev`.
+ */
+function resolveSiteUrl(): string {
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL)
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
+}
+
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://stakehold.xyz"
-  ),
+  metadataBase: new URL(resolveSiteUrl()),
   title: {
     default: `${BRAND.name} — ${BRAND.tagline}`,
     template: `%s · ${BRAND.name}`,
