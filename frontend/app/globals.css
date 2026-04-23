@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "@rainbow-me/rainbowkit/styles.css";
+
+/* ─────────────────────────────────────────────────────────────
+   Semantic theme tokens. Dark mode is the default here (the
+   aesthetic fits a finance product) but every color is a token
+   so we can flip to light later without touching components.
+   ───────────────────────────────────────────────────────────── */
+:root {
+  --bg: 222 30% 7%;
+  --surface: 222 25% 10%;
+  --surface-2: 222 22% 14%;
+  --border: 222 15% 20%;
+  --fg: 210 30% 98%;
+  --fg-muted: 215 14% 66%;
+  --accent: 158 77% 52%;    /* jade-green — feels like money */
+  --accent-fg: 158 90% 10%;
+  --success: 142 71% 45%;
+  --warning: 38 92% 50%;
+  --danger: 0 72% 58%;
+}
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: hsl(var(--bg));
+  color: hsl(var(--fg));
+  font-family: Inter, system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+/* Subtle grid backdrop */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 20% 0%, hsl(var(--accent) / 0.07), transparent 40%),
+    radial-gradient(circle at 80% 100%, hsl(var(--accent) / 0.05), transparent 40%);
+  z-index: -1;
+}
+
+@layer components {
+  .card {
+    @apply bg-surface border border-border rounded-xl p-6 shadow-lg shadow-black/20;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 font-medium
+           transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm;
+  }
+
+  .btn-primary {
+    @apply btn bg-accent text-accent-fg hover:brightness-110 active:brightness-95;
+  }
+
+  .btn-secondary {
+    @apply btn bg-surface-2 text-fg hover:bg-border border border-border;
+  }
+
+  .btn-ghost {
+    @apply btn text-fg-muted hover:text-fg hover:bg-surface-2;
+  }
+
+  .btn-danger {
+    @apply btn bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full
+           bg-surface-2 text-fg-muted border border-border;
+  }
+
+  .stat-label {
+    @apply text-xs uppercase tracking-wider font-semibold text-fg-muted;
+  }
+
+  .stat-value {
+    @apply text-2xl md:text-3xl font-bold text-fg mt-1 tabular-nums;
+  }
+}

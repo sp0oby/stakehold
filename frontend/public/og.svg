@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a1024"/>
+      <stop offset="100%" stop-color="#15213f"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="85%" cy="15%" r="55%">
+      <stop offset="0%" stop-color="#2cf2a0" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#2cf2a0" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="k" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2cf2a0"/>
+      <stop offset="100%" stop-color="#14b87a"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+
+  <g stroke="#1e2948" stroke-width="1" opacity="0.35">
+    <line x1="0" y1="530" x2="1200" y2="530"/>
+    <line x1="0" y1="100" x2="1200" y2="100"/>
+  </g>
+
+  <!-- Logo mark -->
+  <g transform="translate(80, 80)">
+    <rect width="76" height="76" rx="18" fill="url(#k)"/>
+    <path d="M38 16 L61 34 L61 58 L15 58 L15 34 Z" fill="#052018" stroke-linejoin="round"/>
+    <rect x="13" y="60" width="50" height="5" rx="2.5" fill="#052018"/>
+  </g>
+  <text x="180" y="135" font-family="Inter, system-ui, sans-serif" font-weight="800" font-size="42" fill="#ffffff" letter-spacing="-1">Stakehold</text>
+
+  <!-- Headline -->
+  <text x="80" y="300" font-family="Inter, system-ui, sans-serif" font-weight="800" font-size="96" fill="#ffffff" letter-spacing="-3">
+    Own the work.
+  </text>
+  <text x="80" y="395" font-family="Inter, system-ui, sans-serif" font-weight="800" font-size="96" fill="#2cf2a0" letter-spacing="-3">
+    Not just the walls.
+  </text>
+
+  <!-- Subhead -->
+  <text x="80" y="465" font-family="Inter, system-ui, sans-serif" font-weight="500" font-size="28" fill="#9aa4be">
+    Real-estate co-ownership that rebalances with actual contribution.
+  </text>
+
+  <!-- Chips -->
+  <g transform="translate(80, 510)">
+    <rect width="210" height="48" rx="24" fill="#1c2848" stroke="#2a3966" stroke-width="1"/>
+    <circle cx="28" cy="24" r="5" fill="#2cf2a0"/>
+    <text x="46" y="31" font-family="Inter, system-ui, sans-serif" font-weight="600" font-size="17" fill="#e7ecf9">Live on Sepolia</text>
+
+    <rect x="230" y="0" width="220" height="48" rx="24" fill="#1c2848" stroke="#2a3966" stroke-width="1"/>
+    <text x="250" y="31" font-family="Inter, system-ui, sans-serif" font-weight="600" font-size="17" fill="#e7ecf9">UUPS Upgradeable</text>
+
+    <rect x="470" y="0" width="260" height="48" rx="24" fill="#1c2848" stroke="#2a3966" stroke-width="1"/>
+    <text x="490" y="31" font-family="Inter, system-ui, sans-serif" font-weight="600" font-size="17" fill="#e7ecf9">Foundry · Next.js · viem</text>
+  </g>
+</svg>
