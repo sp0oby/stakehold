@@ -24,9 +24,10 @@ import type { Abi, Log } from "viem";
 
 // Infura's documented max range per eth_getLogs call on most tiers.
 const CHUNK_SIZE = 9_999n;
-// How far back the chunked fallback looks. Roughly six months of Sepolia
-// blocks — more than enough for any property in this preview.
-const FALLBACK_LOOKBACK = 1_200_000n;
+// How far back the chunked fallback looks. ~500k Sepolia blocks is
+// roughly ten weeks — plenty for any property in this preview and keeps
+// the worst-case scan to ~50 chunked calls instead of 120.
+const FALLBACK_LOOKBACK = 500_000n;
 
 export function useEventLogs(
   address: `0x${string}` | undefined,
@@ -70,7 +71,19 @@ export function useEventLogs(
 
       // Fallback: chunked scan of the recent window.
       try {
-        const head = await client.getBlockNumber();
+        const headRaw = await client.getBlockNumber().catch(() => undefined);
+        // getBlockNumber can come back `undefined` when the transport is
+        // momentarily broken (batching misalignment, proxy warmup, etc.).
+        // Treat that as a transient empty state instead of throwing.
+        if (typeof headRaw !== "bigint") {
+          // eslint-disable-next-line no-console
+          console.warn(
+            `[useEventLogs:${eventName}] head block unavailable, skipping fallback`
+          );
+          if (!cancelled) setLogs([]);
+          return;
+        }
+        const head = headRaw;
         const earliest =
           head > FALLBACK_LOOKBACK ? head - FALLBACK_LOOKBACK : 0n;
 
@@ -86,9 +99,11 @@ export function useEventLogs(
               fromBlock: from,
               toBlock: to,
             });
-            collected.push(...(chunk as Log[]));
+            if (Array.isArray(chunk)) {
+              collected.push(...(chunk as Log[]));
+            }
           } catch (chunkErr) {
-            // One bad chunk shouldn't kill the whole scan — log it and move on.
+            // One bad chunk shouldn't kill the whole scan — log and move on.
             // eslint-disable-next-line no-console
             console.warn(
               `[useEventLogs:${eventName}] chunk ${from}-${to} failed`,

@@ -57,14 +57,16 @@ export const wagmiConfig = getDefaultConfig({
   projectId: projectId ?? "stub-for-local-dev",
   chains: [sepolia],
   transports: {
-    // Batch simultaneous reads into a single upstream request — cuts call
-    // volume ~5-10x on busy tabs. `batchSize: 20` keeps any individual batch
-    // small enough that one slow call (e.g. a wide eth_getLogs) can't push
-    // the whole batch past the serverless function timeout; `wait: 16` is
-    // short enough that the user never perceives the delay.
-    [sepolia.id]: http(rpcUrl, {
-      batch: { wait: 16, batchSize: 20 },
-    }),
+    // Batching is intentionally disabled. With batch: true, viem's HTTP
+    // transport collapses concurrent reads into a single JSON-RPC array,
+    // and relies on strict 1:1 response ordering from upstream. Any
+    // mismatch (proxy returning a singular error for a batched input,
+    // upstream dropping an element, etc.) makes viem read `undefined`
+    // from the response slot and crash in decodeEventLog / BigInt(). The
+    // proxy itself plus react-query de-duplication already gets us most
+    // of the call-count reduction we wanted; batching can be revisited
+    // later under a subgraph or dedicated indexer.
+    [sepolia.id]: http(rpcUrl),
   },
   ssr: true,
 });

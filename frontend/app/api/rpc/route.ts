@@ -150,28 +150,60 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const calls = Array.isArray(body) ? body : [body];
+  const isBatch = Array.isArray(body);
+  const calls = isBatch ? (body as unknown[]) : [body];
   if (calls.length === 0) {
     return NextResponse.json(rpcError(null, -32600, "Empty batch."), {
       status: 400,
     });
   }
 
-  for (const call of calls) {
+  // Screen every call. If any are blocked, respond in the SAME shape as the
+  // incoming request — batch input gets a batch-shaped response with one
+  // entry per call, singular input gets a singular response. Returning a
+  // singular error for a batched request was what caused viem's transport
+  // to read `undefined` from response slots and crash with
+  // "Cannot read properties of undefined (reading 'map')".
+  const errors: { index: number; id: number | string | null; method: string }[] = [];
+  calls.forEach((call, index) => {
     const screened = screenCall(call);
     if (!screened.ok) {
-      // Log to Vercel function output so we can see what got rejected.
-      // eslint-disable-next-line no-console
-      console.warn("[rpc] blocked method:", screened.method);
-      return NextResponse.json(
-        rpcError(
-          screened.id,
-          -32601,
-          `Method not allowed via proxy: ${screened.method}`
-        ),
-        { status: 400 }
-      );
+      errors.push({ index, id: screened.id, method: screened.method });
     }
+  });
+
+  if (errors.length > 0) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      "[rpc] blocked methods:",
+      errors.map((e) => e.method).join(", ")
+    );
+    if (isBatch) {
+      const payload = calls.map((call, index) => {
+        const err = errors.find((e) => e.index === index);
+        if (err) {
+          return rpcError(
+            err.id,
+            -32601,
+            `Method not allowed via proxy: ${err.method}`
+          );
+        }
+        // For calls in the batch that would have succeeded, return a
+        // benign null result; the whole batch is being rejected, but at
+        // least the shape viem expects is preserved.
+        const c = call as JsonRpcRequest;
+        return { jsonrpc: "2.0", id: c.id ?? null, result: null };
+      });
+      return NextResponse.json(payload, { status: 200 });
+    }
+    return NextResponse.json(
+      rpcError(
+        errors[0].id,
+        -32601,
+        `Method not allowed via proxy: ${errors[0].method}`
+      ),
+      { status: 400 }
+    );
   }
 
   const controller = new AbortController();
