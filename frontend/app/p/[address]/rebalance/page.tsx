@@ -81,7 +81,7 @@ export default function RebalancePage({
         ) : grants.length === 0 ? (
           <EmptyState
             title="No vesting grants yet"
-            description="When you contribute and the DAO approves it, your shares vest here for 6 months before you can claim them."
+            description="When you contribute and the group approves it, your new stake shows up here with a six-month earn-in period before it fully moves and votes."
           />
         ) : (
           <ul className="space-y-3">

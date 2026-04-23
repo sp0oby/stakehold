@@ -258,8 +258,8 @@ export default function LaunchPage() {
       <div className="max-w-2xl mx-auto">
         <h1 className="text-2xl md:text-3xl font-bold">Launch a property</h1>
         <p className="text-fg-muted mt-2 mb-6">
-          Deploy a new Share token + governance pair via the Stakehold factory.
-          Connect a wallet to get started.
+          Spin up a new co-ownership space for a building. Connect a wallet to
+          get started.
         </p>
         <ConnectGate>
           <span />
@@ -273,9 +273,11 @@ export default function LaunchPage() {
       <div>
         <h1 className="text-2xl md:text-3xl font-bold">Launch a property</h1>
         <p className="text-fg-muted mt-2">
-          Deploy a new Share token + governance pair via the Stakehold factory.
-          The factory atomically configures both proxies, grants mint rights to
-          the governance contract, and renounces itself. You become DAO admin.
+          You set the details, the starting partners, and a one-time launch
+          payment. Stakehold stands up a dedicated co-ownership space for this
+          property. You start as the property operator who can run day-to-day
+          settings — and you can hand that role to a multisig when you&apos;re
+          ready.
         </p>
       </div>
 
@@ -310,13 +312,13 @@ export default function LaunchPage() {
             onChange={(v) => update("city", v)}
           />
           <Field
-            label="Share token name"
+            label="Ownership token name"
             placeholder="Brooklyn Brownstone Shares"
             value={form.tokenName}
             onChange={(v) => update("tokenName", v)}
           />
           <Field
-            label="Share token symbol"
+            label="Ticker (symbol)"
             placeholder="BKS"
             value={form.tokenSymbol}
             onChange={(v) => update("tokenSymbol", v.toUpperCase().slice(0, 8))}

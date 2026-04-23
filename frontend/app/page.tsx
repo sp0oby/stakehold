@@ -35,9 +35,10 @@ export default function Home() {
             Co-own buildings that reflect the actual work behind them.
           </h1>
           <p className="text-fg-muted mt-4 text-lg leading-relaxed">
-            Every contribution — capital, upgrades, maintenance, taxes — is submitted
-            with IPFS proof, voted on by shareholders, and rebalances the cap table
-            when executed. Rental income streams pro-rata to every holder as ETH.
+            Every contribution — capital, upgrades, maintenance, taxes — is recorded
+            with a verified proof, approved by your co-owners, and updates ownership
+            when it goes through. Rental income is paid out in ETH in proportion
+            to each person&apos;s stake.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/properties" className="btn-primary">
@@ -134,17 +135,17 @@ export default function Home() {
           <Step
             n="1"
             title="Someone launches a property"
-            body="A creator calls the factory with a flat launch fee, metadata, and initial holders. Factory atomically deploys a paired Share token + Property governor, wires permissions, and renounces itself."
+            body="A creator pays a one-time launch fee, sets the name and location, and can assign starting partners. Stakehold spins up an isolated co-ownership space for that building — not shared with any other property."
           />
           <Step
             n="2"
             title="Co-owners contribute work"
-            body="Anyone can submit IPFS-proofed contributions (capital, upkeep, taxes). Small ones auto-approve after a timelock; large ones open a DAO vote on the Share token."
+            body="People submit their spend with proof, co-owners review it, and the group votes when it matters. Smaller line items can clear on a short delay; bigger ones get a full vote."
           />
           <Step
             n="3"
-            title="Shares rebalance, yield streams"
-            body="Executed contributions mint new shares on a 6-month cliff. Rental income is deposited in ETH and streamed pro-rata via a pull-pattern accumulator."
+            title="Ownership tracks reality, rent gets paid out"
+            body="Approved work vests over time, so ownership can shift without overnight surprises. When rent comes in, it&apos;s posted to the group and co-owners claim their share in ETH when they want."
           />
         </ol>
       </section>

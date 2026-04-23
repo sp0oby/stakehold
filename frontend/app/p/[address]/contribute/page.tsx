@@ -58,7 +58,7 @@ export default function ContributePage({
         }
         const { cid, gatewayUrl } = await r.json();
         setUpload({ status: "done", cid, url: gatewayUrl, file });
-        toast.success("Proof uploaded to IPFS");
+        toast.success("Proof file saved");
       } catch (e) {
         const msg = (e as Error).message || "Upload failed";
         setUpload({ status: "error", message: msg });
@@ -113,11 +113,13 @@ export default function ContributePage({
       <div>
         <h1 className="text-2xl md:text-3xl font-bold">Submit a contribution</h1>
         <p className="text-fg-muted mt-2">
-          Uploaded proof → IPFS → on-chain hash. Contributions ≤{" "}
+          Attach a proof file, then enter the dollar amount. Line items at or
+          below{" "}
           <span className="font-medium text-fg">
             {formatUsd(BigInt(Math.round(thresholdUsd * 1e6)))}
           </span>{" "}
-          auto-approve after the timelock. Larger ones trigger a DAO vote.
+          can clear on a short review delay. Larger ones are put to a co-owner
+          vote.
         </p>
       </div>
 
@@ -125,8 +127,8 @@ export default function ContributePage({
         <div>
           <label className="stat-label">1. Proof of contribution</label>
           <p className="text-xs text-fg-muted mt-1">
-            Drop a receipt, invoice, or work-order PDF. We hash the IPFS CID and put
-            it on-chain — the file itself is pinned to IPFS and stays there.
+            Drop a receipt, invoice, or work-order PDF. The file is stored for you
+            and a tamper-check fingerprint is kept with the public record.
           </p>
         </div>
         <div
@@ -141,11 +143,11 @@ export default function ContributePage({
           {upload.status === "uploading" ? (
             <div className="flex items-center justify-center gap-2 text-fg-muted">
               <Spinner />
-              Uploading to IPFS…
+              Uploading…
             </div>
           ) : upload.status === "done" ? (
             <div className="space-y-2">
-              <div className="text-success font-medium">✓ Pinned to IPFS</div>
+              <div className="text-success font-medium">✓ Proof on file</div>
               <div className="text-xs text-fg-muted break-all">{upload.file.name}</div>
               <a
                 href={upload.url}
@@ -192,8 +194,8 @@ export default function ContributePage({
           {valueUsd && Number.isFinite(numericValue) && numericValue > 0 && (
             <p className={`text-xs mt-2 ${willAutoApprove ? "text-success" : "text-warning"}`}>
               {willAutoApprove
-                ? "✓ Under threshold — will auto-approve after the timelock."
-                : "△ Above threshold — this will open a DAO vote."}
+                ? "✓ Under threshold — can clear on a short review delay."
+                : "△ Above threshold — co-owners will need to vote."}
             </p>
           )}
         </div>
@@ -211,7 +213,7 @@ export default function ContributePage({
             className="mt-2 w-full rounded-lg bg-surface-2 border border-border px-3 py-2.5 text-fg placeholder:text-fg-muted focus:outline-none focus:border-accent"
           />
           <p className="text-xs text-fg-muted mt-1">
-            Notes are kept off-chain; the IPFS CID you pinned is the canonical record.
+            Notes are for you only — they don&apos;t change the public submission.
           </p>
         </div>
 

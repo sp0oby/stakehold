@@ -79,7 +79,7 @@ export default function PropertyLayout({
               <AddressPill address={address as `0x${string}`} />
               {data?.share && (
                 <>
-                  <span className="text-fg-muted ml-2">Share token:</span>
+                  <span className="text-fg-muted ml-2">Co-owner token:</span>
                   <AddressPill address={data.share} />
                 </>
               )}

@@ -142,7 +142,7 @@ function LegalDocsRotator({
         <input {...getInputProps()} />
         {uploading ? (
           <div className="flex items-center justify-center gap-2 text-fg-muted">
-            <Spinner /> Uploading to IPFS…
+            <Spinner /> Uploading…
           </div>
         ) : cid ? (
           <div className="text-success">
@@ -365,7 +365,7 @@ function RoleGrant({ propertyAddress }: { propertyAddress: `0x${string}` }) {
   return (
     <Subsection
       title="Grant a role"
-      hint="Hand DEFAULT_ADMIN / PAUSER / UPGRADER to a Safe multisig for production. You keep yours until you renounce separately via Etherscan."
+      hint="Typical handoff: grant operator, pause, and upgrade access to a Safe multisig, confirm each role on-chain, then remove your own access from the block explorer when you are sure the multisig works."
     >
       <div className="space-y-2">
         <LabeledInput
@@ -393,7 +393,9 @@ function RoleGrant({ propertyAddress }: { propertyAddress: `0x${string}` }) {
         </div>
         <p className="text-xs text-fg-muted">
           Sequential grants (DEFAULT_ADMIN → PAUSER → UPGRADER) hand full control to a multisig without leaving a gap.
-          To fully step down afterwards, call <code>renounceRole</code> from each role — easiest via Etherscan write tab.
+          To fully step down afterwards, renounce each role you still hold from the
+          contract&apos;s &ldquo;Write&rdquo; screen in a block explorer once the
+          multisig is live.
         </p>
       </div>
     </Subsection>

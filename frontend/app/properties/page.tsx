@@ -34,8 +34,8 @@ export default function PropertiesIndex() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold">Properties</h1>
           <p className="text-fg-muted mt-2">
-            Every property launched via the Stakehold factory. Each is its own
-            Share token + governance pair — totally isolated.
+            Every listed building has its own co-owners, its own record of work, and
+            its own rental payouts — nothing is mixed between properties.
           </p>
         </div>
         <Link href="/launch" className="btn-primary shrink-0">

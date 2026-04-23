@@ -63,7 +63,7 @@ export function AddressPill({
         target="_blank"
         rel="noreferrer"
         className="text-fg-muted hover:text-fg transition-colors"
-        title="View on Etherscan"
+        title="View on block explorer"
         aria-label="View on block explorer"
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

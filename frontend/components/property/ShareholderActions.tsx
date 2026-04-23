@@ -17,7 +17,7 @@ import { parseContractError, formatShares } from "@/lib/format";
  *   - Transfer shares to another address (onboarding a partner, exiting a
  *     position without going through a secondary market)
  *   - Delegate voting power (self by default; can delegate to a trustee /
- *     DAO steward without giving up economic exposure)
+ *     steward without giving up economic exposure)
  */
 export function ShareholderActions({
   shareAddress,

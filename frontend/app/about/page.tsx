@@ -44,27 +44,27 @@ export default function AboutPage() {
           <Step
             n="2"
             title="Co-owners contribute"
-            body="Paid for a repair? Funded new appliances? Handled property taxes? Submit an on-chain contribution with a receipt or invoice pinned to IPFS. The contribution is scoped to a single property."
+            body="Paid for a repair? Funded new appliances? Handled property taxes? Submit a contribution with a receipt or invoice attached. It stays tied to that property and nowhere else."
           />
           <Step
             n="3"
-            title="Small contributions auto-approve, large ones go to a vote"
-            body="Under the auto-approve threshold (default $500) a contribution passes after a short timelock. Larger contributions open a DAO vote — existing shareholders vote with their snapshotted ownership. The admin can cancel spam during the window."
+            title="Smaller work clears on a delay, bigger work needs a full vote"
+            body="For routine amounts under a set threshold, there&apos;s a short review window before the record goes in. Bigger line items are put to a co-owner vote, using everyone&apos;s ownership at the moment the item opened — you can&apos;t show up the same day to swing it. The lead operator can still cancel obvious junk during the window."
           />
           <Step
             n="4"
-            title="The cap table rebalances"
-            body="When a contribution executes, new shares mint to the contributor in proportion to the work done, capped at 5% per execution so no single action can silently take over the property. Existing holders are diluted pro-rata."
+            title="The ownership split can shift"
+            body="When a contribution is approved, new stakes go to the person who did the work — up to 5% of the cap table in one go, so a single line item can&apos;t rewrite the group overnight. Everyone else is adjusted proportionally."
           />
           <Step
             n="5"
-            title="Newly minted shares vest"
-            body="Rebalance grants unlock after a six-month cliff. This rewards long-term co-owners, discourages one-shot dilution attacks, and gives the DAO a window to react if something looks wrong."
+            title="New stakes unlock over time"
+            body="Fresh stakes from work earn-in stay locked for six months before they can move or vote. That window gives everyone time to spot anything that doesn&apos;t look right."
           />
           <Step
             n="6"
             title="Rental income is paid out"
-            body="Any party — property manager, tenant, rental platform — can deposit ETH into the property's Share token as rental income. The platform splits it pro-rata across every owner. You claim whenever you want."
+            body="When rent is received, it can be posted to the group and split across co-owners in line with their stakes. You claim your portion whenever you want — no one else has to send it to you."
           />
         </ol>
       </section>
@@ -83,11 +83,11 @@ export default function AboutPage() {
           />
           <Term
             term="Contribution"
-            def="An on-chain claim that work or capital was put into the property, pinned to an IPFS receipt. Contributions can be approved, rejected, or cancelled by the property's governance."
+            def="A recorded claim that money or work went into the property, with proof attached. Co-owners can approve it, turn it down, or cancel it if something is off."
           />
           <Term
             term="Proposal"
-            def="A DAO vote triggered by contributions above the auto-approve threshold. Voting power is snapshotted at proposal creation — you can't buy shares the day of a vote to swing it."
+            def="A co-owner vote on a larger line item. Everyone&apos;s weight is set when the item opens, so you can&apos;t change your stake the same day to game the result."
           />
           <Term
             term="Timelock"
@@ -99,7 +99,7 @@ export default function AboutPage() {
           />
           <Term
             term="Yield"
-            def="Rental income distributed in ETH. Every holder accrues their share continuously; claim whenever you want, pay your own gas."
+            def="Rental and pass-through income for the group, distributed in ETH. It accrues to you automatically; you collect when you&apos;re ready."
           />
           <Term
             term="Admin"
@@ -125,9 +125,9 @@ export default function AboutPage() {
             title="Submit a contribution"
             steps={[
               "Open the property you're contributing to and go to Contribute.",
-              "Drag a receipt, invoice, or photo onto the drop-zone — it gets pinned to IPFS automatically.",
-              "Enter the USD value of the contribution. Under the threshold it auto-approves; above it, it goes to a DAO vote.",
-              "Submit. After approval + timelock, anyone can execute your contribution and mint your vested shares.",
+              "Drag a receipt, invoice, or photo onto the drop zone — we store the file and link it to your submission.",
+              "Enter the USD value. Smaller line items can clear on a short review delay; larger ones are put to a co-owner vote.",
+              "After approval, anyone can finalise the line item and your new stake (with its earn-in lock) is recorded for you.",
             ]}
           />
           <Guide
@@ -151,18 +151,18 @@ export default function AboutPage() {
           <Guide
             title="Launch your own property"
             steps={[
-              "Click Launch in the top nav. A flat launch fee is paid into the protocol treasury.",
-              "Fill in the property identity, financials, and cap table — you can split the 1,000,000 shares across co-founders at launch.",
-              "Attach a public metadata bundle (photos, description) and a gated legal docs bundle (deeds, insurance) pinned to IPFS.",
-              "Submit. The factory deploys your property's contracts atomically and hands you admin control.",
+              "Click Launch. A one-time setup fee is paid to the Stakehold treasury.",
+              "Fill in the property identity, financials, and who holds what at day one — you can split the full stake across co-founders at launch.",
+              "Attach a public information pack (photos, story) and a private legal bundle (deeds, insurance) the same way you upload other files.",
+              "Submit. A dedicated co-ownership space is created for that building, and you start as the day-to-day operator unless you hand that role to a multisig.",
             ]}
           />
           <Guide
             title="Add a partner later"
             steps={[
-              "Transfer shares to the partner's address from the property's share token.",
-              "Ask the partner to self-delegate once so their voting power activates.",
-              "Alternatively, the partner can earn in by contributing work to the property and going through the normal contribution flow.",
+              "From the property page, open Rental & yield → the My shares card → send a portion of your stake to the partner's wallet address.",
+              "Ask the partner to turn on their voting power once from the same screen so their voice counts in decisions.",
+              "Or have them join by contributing to the work of the place through the regular contribution path.",
             ]}
           />
         </div>
@@ -177,20 +177,20 @@ export default function AboutPage() {
             body="Each property has its own cap table, its own treasury, and its own governance. A problem on one property never propagates to another — there's no shared pool that all properties dip into."
           />
           <SafetyCard
-            title="Ownership is transparent on-chain"
-            body="Shares are an ERC-20 token you can see in any wallet or block explorer. Every contribution, vote, and yield payment is a public transaction — there are no hidden ledger states."
+            title="Ownership is out in the open"
+            body="Stakes, votes, and income movements are all recorded where anyone can look them up. The numbers you see in the app are the same numbers on the public record."
           />
           <SafetyCard
             title="No whale takeovers"
-            body="A single contribution can mint at most 5% of total supply. Above a configurable threshold, contributions require a DAO vote at a snapshotted moment in time — late buyers can't swing decisions."
+            body="A single piece of work can earn in at most 5% of the cap table. Above a set dollar threshold, the group has to vote — and the vote is locked to ownership from when the line item opened, so a last-minute buy-in can't swing it."
           />
           <SafetyCard
             title="Vesting protects existing owners"
             body="New shares from approved contributions are locked for six months before they become transferable or votable. Existing owners always have time to react to a rebalance."
           />
           <SafetyCard
-            title="Pull-based yield, no custodian"
-            body="Rental income sits in the property's Share contract. You claim it directly with your wallet — no intermediary holds your money, and no admin can redirect yield away from shareholders."
+            title="Income is yours to collect"
+            body="Rental and pass-through income is attributed to the group first, then you pull what you're owed to your own wallet when you want. The property operator can pause day-to-day actions in a crisis, but not quietly redirect income that already belongs to co-owners."
           />
           <SafetyCard
             title="Emergency pause without lock-out"
@@ -199,10 +199,10 @@ export default function AboutPage() {
         </div>
         <div className="mt-6 rounded-lg border border-warning/40 bg-warning/5 p-4 text-sm text-fg-muted">
           <strong className="text-warning">Testnet notice.</strong>{" "}
-          {BRAND.name} currently runs on the Sepolia test network. Testnet ETH
-          has no monetary value and nothing on this site is a security, an
-          investment, or a financial product. Contracts are verified on
-          Sepolia Etherscan but have not undergone a formal audit.
+          {BRAND.name} currently runs on a public preview network. Preview funds
+          have no monetary value and nothing on this site is a security, an
+          investment, or a financial product. The code is published for anyone
+          to read, but it has not undergone a formal third-party audit.
         </div>
       </section>
 
@@ -212,7 +212,7 @@ export default function AboutPage() {
         <div className="space-y-4">
           <Faq
             q="What does it cost to use Stakehold?"
-            a="Stakehold itself charges a flat fee to launch a new property (set by the protocol treasury). Everything else — contributing, voting, executing, claiming yield — only costs the network gas fee for the transaction you send."
+            a="Stakehold charges a flat setup fee to launch a new property, set by the protocol treasury. After that, you only pay the usual small network fee when you move money or take an action in your wallet."
           />
           <Faq
             q="Can I lose my shares?"
@@ -232,11 +232,11 @@ export default function AboutPage() {
           />
           <Faq
             q="Where are receipts and legal documents stored?"
-            a="On IPFS — the decentralized storage network. The platform pins your file through Filebase and records a cryptographic hash of the content on-chain. The file itself lives on IPFS and stays reachable through any gateway. Legal documents are only surfaced in the UI to verified shareholders of the property."
+            a="Files live in distributed storage, with a short fingerprint kept on the public record so they can't be quietly swapped. Property photos and marketing material can be public; private paperwork is only shown to people who already hold a stake in that building."
           />
           <Faq
             q="What happens if the platform goes away?"
-            a="Properties keep working. The contracts are public, deployed on Sepolia, and every function — claiming yield, transferring shares, voting — is callable directly from Etherscan or any Ethereum tool. This frontend is just one client for the underlying protocol."
+            a="The property's rules and balances don't live in this website — they're on the open network, and any wallet or community-built tool can still interact with them. Stakehold is one interface; it isn't a gate that can disappear with your access."
           />
           <Faq
             q="Is the code open source?"

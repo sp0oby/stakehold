@@ -60,7 +60,7 @@ export default function PropertyOverview({
         <StatCard
           label="Property value"
           value={formatUsd(data?.propertyValueUsd)}
-          tooltip="Current on-chain valuation. Grows as contributions are executed."
+          tooltip="Latest book value the group is working from. It moves as approved contributions land."
         />
         <StatCard
           label="Total shares"
@@ -94,15 +94,16 @@ export default function PropertyOverview({
 
       <section className="card !py-3 !px-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <p className="text-sm text-fg-muted max-w-2xl">
-          <span className="text-fg font-medium">Simulate a rent run (Sepolia)</span> — Send
-          test ETH to the Share token. It’s how rental income would enter the system
-          in production, after a treasurer converts off-chain rent.
+          <span className="text-fg font-medium">Add rental income</span> — When rent is
+          received, it can be posted here so every co-owner&apos;s share updates
+          together. On the live network you&apos;d do this from the property&apos;s
+          operating account; in this environment you can try it with test funds.
         </p>
         <Link
           href={`/p/${address}/yield#rent-payments`}
           className="btn-primary shrink-0 self-start sm:self-center"
         >
-          Add rent
+          Record income
         </Link>
       </section>
 
@@ -224,7 +225,7 @@ export default function PropertyOverview({
           {recent.length === 0 ? (
             <EmptyState
               title="Nothing submitted yet"
-              description="Contributions show up here as soon as someone submits one on-chain."
+              description="Line items from co-owners will appear here as soon as someone submits one."
             />
           ) : (
             <ul className="divide-y divide-border">

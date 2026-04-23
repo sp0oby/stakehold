@@ -40,7 +40,7 @@ export function Footer() {
             { href: "/about#security", label: "Security" },
             { href: "/about#faq", label: "FAQ" },
             etherscan
-              ? { href: etherscan, label: "Factory on Etherscan", external: true }
+              ? { href: etherscan, label: "Factory contract", external: true }
               : null,
           ].filter(Boolean) as { href: string; label: string; external?: boolean }[]}
         />

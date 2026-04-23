@@ -58,9 +58,9 @@ export default function ProposalsPage({
         <div>
           <h1 className="text-2xl md:text-3xl font-bold">Proposals</h1>
           <p className="text-fg-muted mt-2">
-            Large contributions (above the auto-approve threshold) open a DAO vote.
-            Your voting power equals your share balance at the proposal&rsquo;s
-            snapshot block.
+            Larger line items (above the review threshold) go to a co-owner vote.
+            Your weight is the stake you already held when the item opened
+            — buying more the same day won&rsquo;t change it.
           </p>
         </div>
         {wallet && (
@@ -78,7 +78,7 @@ export default function ProposalsPage({
       ) : proposals.length === 0 ? (
         <EmptyState
           title="No proposals yet"
-          description="A proposal is created every time someone submits a contribution above the auto-approve threshold."
+          description="A vote opens when someone submits a line item that needs full co-owner approval."
         />
       ) : (
         <ul className="space-y-4">
