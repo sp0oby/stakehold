@@ -35,7 +35,7 @@ Before any mainnet deployment the following would be required:
 
 Please **do not open a public GitHub issue** for vulnerabilities.
 
-Email: `security@stakehold.xyz` (replace with your preferred address when forking).
+Preferred channel: **[GitHub Security Advisories](https://github.com/sp0oby/stakehold/security/advisories/new)** (private, encrypted, tracked alongside the code).
 
 Include, at minimum:
 

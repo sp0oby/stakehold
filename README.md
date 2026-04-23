@@ -12,7 +12,7 @@ A protocol for dynamic real-estate co-ownership. Cap tables rebalance as co-owne
 [![Next.js](https://img.shields.io/badge/frontend-Next.js%2014-000000?style=flat-square)](https://nextjs.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](./LICENSE)
 
-[Live app](https://stakehold.xyz) · [Architecture](#architecture) · [Live addresses](#live-addresses) · [Run it locally](#local-development) · [Mainnet readiness](#mainnet-readiness-checklist) · [Security](./SECURITY.md) · [Legal](./LEGAL.md)
+[Live app](https://stakehold.vercel.app) · [Architecture](#architecture) · [Live addresses](#live-addresses) · [Run it locally](#local-development) · [Mainnet readiness](#mainnet-readiness-checklist) · [Security](./SECURITY.md) · [Legal](./LEGAL.md)
 
 </div>
 
