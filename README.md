@@ -26,6 +26,38 @@ Traditional fractional real estate freezes the cap table on day one. The person 
 
 Stakehold is a **platform**, not a single property. Anyone can launch a property through the `StakeholdFactory`, which atomically deploys a paired Share token + Property governor with all permissions wired correctly.
 
+## Where does ETH come from?
+
+Three honest answers — the protocol never prints ETH.
+
+1. **The factory launch fee** — a flat-ETH `createProperty` payment to
+   `StakeholdFactory` (treasury / protocol operator). It pays for deployment
+   gas and compensates the platform; it is **not** rent.
+
+2. **Rental & pass-through yield** — ETH enters each property at the
+   **`StakeholdShare`** contract, never at `StakeholdProperty`. Call
+   `distributeYield{value: x}` (or a plain transfer — both hit the
+   `receive()` hook) to stream the deposit pro-rata into the pull-pattern
+   accumulator. Shareholders `claimYield()` to withdraw. This is
+   indistinguishable from a fully automated on-chain system once someone has
+   already converted off-chain rent to ETH. That conversion is the **fiat
+   rail** — today it's a human with a bank account, tomorrow a Bridge.xyz /
+   Circle / Stripe Crypto integration, but it is *always* outside the smart
+   contracts.
+
+3. **Not contributions** — a capital contribution (invoice + IPFS hash) is an
+   off-chain *expense* that mints *equity* (shares) after a vote, not a
+   deposit of ETH. The co-owner already sent dollars to a contractor; the
+   on-chain system records the *claim*, not the wire transfer.
+
+**Bottom line for recruiters:** the contracts solve governance math, cap-table
+dynamics, upgrade safety, and O(1) pull-yield. They deliberately do **not**
+solve ACH → ETH — that is operational plumbing every tokenized-RE product
+(RealT, Lofty, Roofstock) still runs through a licensed treasurer. The
+frontend exposes a *production-shaped* rent deposit flow that calls
+`distributeYield` so you can demonstrate the full loop on Sepolia with test
+ETH.
+
 ## Why it's interesting
 
 - **Four-contract architecture** — Factory launches properties; each property is a `Share` (ERC20Votes + yield) + `Property` (governor + vesting) pair, with a stateless `Lens` aggregator for read-heavy frontends. Independent upgrade surfaces, least-authority wiring.

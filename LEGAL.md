@@ -125,10 +125,32 @@ reference points:
 Reading their offering circulars and operating agreements is the fastest
 education in what this stack looks like in practice.
 
+## 10. The fiat-to-crypto rent rail (non-legal, but structurally required)
+
+Storing the deed, forming the LLC, and filing the securities offering only
+matter once **real rental cash** can reach the on-chain `StakeholdShare`
+contract as ETH (or, in a USDC-accepting fork, a stable asset). The smart
+contract cannot pull ACH from a tenant's bank account. Today that conversion
+is almost always a **licensed human treasurer** (RealT, Lofty) or a **payment
+integrator** (Circle Mint, Bridge, Stripe) sitting between the bank account
+and the chain.
+
+| Operator model | How rent becomes claimable on-chain | Custodial? |
+| --- | --- | --- |
+| **Manual treasurer** (status quo) | Off-ramp fiat weekly → `distributeYield{value:}` on Share | Yes — you trust the treasurer not to commingle. |
+| **ACH → stable → bridge** (2024+ APIs) | Bridge / Circle wires USDC to a multisig → swap to ETH (or use a USDC-accepting Share) | Minimally custodial at the fintech. |
+| **Direct stablecoin from tenants** | Tenants with self-custody pay rent in USDC; multisig funnels to Share | Least human touch; smallest TAM. |
+
+**What Stakehold ships today:** a permissionless, auditable, production-shaped
+`distributeYield` entry point. What it does *not* ship: compliance around who
+is allowed to press that button for a *specific* mainnet property — that
+belongs in the operating agreement, the LLC charter, and (if the token is a
+security) the transfer-gating module, not the generic ERC-20.
+
 ---
 
 **Bottom line:** the contracts in this repo are the *on-chain half* of a
 dual-layer system. The off-chain half — entity formation, securities
-registration, transfer agent, operating agreement — is where most of the cost
-and time live, and where most attempted tokenized-real-estate projects
-actually fail.
+registration, transfer agent, operating agreement, **and** a compliant rent
+on-rail — is where most of the cost, time, and failure modes live, and where
+most attempted tokenized-real-estate projects actually fail.

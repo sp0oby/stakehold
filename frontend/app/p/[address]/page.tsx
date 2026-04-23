@@ -87,8 +87,22 @@ export default function PropertyOverview({
         <Link href={`/p/${address}/proposals`} className="btn-secondary">
           View proposals
         </Link>
-        <Link href={`/p/${address}/yield`} className="btn-secondary">
-          Claim yield
+        <Link href={`/p/${address}/yield#rent-payments`} className="btn-secondary">
+          Rental &amp; yield
+        </Link>
+      </section>
+
+      <section className="card !py-3 !px-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <p className="text-sm text-fg-muted max-w-2xl">
+          <span className="text-fg font-medium">Simulate a rent run (Sepolia)</span> — Send
+          test ETH to the Share token. It’s how rental income would enter the system
+          in production, after a treasurer converts off-chain rent.
+        </p>
+        <Link
+          href={`/p/${address}/yield#rent-payments`}
+          className="btn-primary shrink-0 self-start sm:self-center"
+        >
+          Add rent
         </Link>
       </section>
 
