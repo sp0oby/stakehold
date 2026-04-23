@@ -37,7 +37,7 @@ export function useProposals(propertyAddress: string | undefined) {
             }) as const
         )
       : [],
-    query: { enabled: !!address && count > 0, refetchInterval: 15_000 },
+    query: { enabled: !!address && count > 0, refetchInterval: 30_000 },
   });
 
   const proposals: ProposalView[] = useMemo(() => {

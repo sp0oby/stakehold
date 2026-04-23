@@ -52,7 +52,7 @@ export function useIsAdmin(
     allowFailure: true,
     query: {
       enabled,
-      refetchInterval: 30_000,
+      refetchInterval: 120_000,
       staleTime: 15_000,
     },
     // pin to the app chain so stray wallet network switches don't re-issue calls

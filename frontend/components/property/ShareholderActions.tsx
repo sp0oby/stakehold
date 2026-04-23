@@ -150,7 +150,7 @@ function DelegateVotes({
     functionName: "delegates",
     args: [wallet],
     chainId: CHAIN_ID,
-    query: { refetchInterval: 30_000 },
+    query: { refetchInterval: 60_000 },
   });
   const current = delegateRead.data as `0x${string}` | undefined;
 

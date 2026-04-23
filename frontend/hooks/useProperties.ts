@@ -35,7 +35,7 @@ export function useProperties(offset: bigint = 0n, limit: bigint = 24n) {
     args: [offset, limit],
     query: {
       enabled,
-      refetchInterval: 30_000,
+      refetchInterval: 60_000,
       staleTime: 10_000,
     },
   });

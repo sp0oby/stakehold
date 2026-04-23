@@ -39,7 +39,7 @@ export function useUserPosition(
     ...lensConfig,
     functionName: "getUserPosition",
     args: pAddr && uAddr ? [pAddr, uAddr] : undefined,
-    query: { enabled, refetchInterval: 15_000, staleTime: 5_000 },
+    query: { enabled, refetchInterval: 30_000, staleTime: 15_000 },
   });
 
   return {
@@ -62,7 +62,7 @@ export function useUserGrants(
     ...lensConfig,
     functionName: "getUserGrants",
     args: pAddr && uAddr ? [pAddr, uAddr] : undefined,
-    query: { enabled, refetchInterval: 30_000, staleTime: 10_000 },
+    query: { enabled, refetchInterval: 60_000, staleTime: 20_000 },
   });
 
   return {
@@ -85,7 +85,7 @@ export function useUserPositions(
     ...lensConfig,
     functionName: "getUserPositions",
     args: uAddr ? [uAddr, offset, limit] : undefined,
-    query: { enabled, refetchInterval: 30_000, staleTime: 10_000 },
+    query: { enabled, refetchInterval: 60_000, staleTime: 20_000 },
   });
 
   const all = (res.data as UserPosition[] | undefined) ?? [];
