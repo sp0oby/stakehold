@@ -2,48 +2,65 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-// Bump the Vercel function duration past the Hobby-plan default of 10s —
-// eth_getLogs over wide ranges routinely takes 12-20s to come back from
-// Infura, and if the function is killed mid-request the browser sees a
-// timeout and silently renders empty state. 30s is the Hobby-plan cap.
+// Bump the Vercel function duration past the Hobby default of 10s — a wide
+// eth_getLogs can take 10-20s to come back, and getting killed mid-request
+// makes the browser render empty state. 30s is the Hobby-plan cap.
 export const maxDuration = 30;
 
 /**
- * Server-side JSON-RPC proxy.
+ * Server-side JSON-RPC proxy with upstream fallback chain.
  *
- * Why this exists:
- *   Before: the browser called `https://sepolia.infura.io/v3/<key>` directly,
- *   which meant the key was embedded in every request and visible in DevTools.
- *   Anyone could copy it and burn through the quota, triggering 429s for real
- *   users.
+ * Why the fallback chain:
+ *   A single keyed provider (Infura free tier) was rate-limiting the whole
+ *   app once a real user spent more than a minute on the dashboard. Instead
+ *   of paying for a bigger Infura plan just for a Sepolia demo, we point the
+ *   proxy at a chain of free public Sepolia RPCs. If the first one 429s /
+ *   5xxs / times out, we transparently try the next — the browser never sees
+ *   the failure, and no provider needs to hold up the whole app on its own.
  *
- *   After: the browser calls `/api/rpc` on our own origin. This route runs on
- *   the server (Vercel Function), reads the real upstream URL from a
- *   non-public env var, and forwards the JSON-RPC body. The upstream key never
- *   reaches the client.
+ * Why proxy at all if the public RPCs don't need keys:
+ *   1. Changing providers later is a single env var, not a redeploy of the
+ *      entire client bundle.
+ *   2. We keep the method denylist, body-size cap, and request-shape policing
+ *      in one place.
+ *   3. If you ever plug in a keyed provider (Alchemy, Infura paid), the key
+ *      still stays server-side for free.
  *
- * Hardening:
- *   - Only POST is accepted (JSON-RPC over HTTP is POST).
- *   - Method DENYLIST: wallet/signing and expensive debug/trace methods are
- *     rejected. Everything else (all standard read methods, plus niche ones
- *     like eth_getProof that future viem versions may call) is forwarded.
- *     We prefer a denylist over an allowlist because viem/wagmi expand the
- *     set of methods they use between versions, and a tight allowlist breaks
- *     the UI without actually improving security — Infura doesn't have a
- *     wallet, so most "dangerous" methods would fail upstream anyway.
- *   - Batch requests are supported; every entry in the batch is screened.
- *   - Body size cap prevents log-query DoS.
- *   - Short upstream timeout so a slow provider can't pin a function instance.
+ * Configuration:
+ *   SEPOLIA_RPC_URLS  — comma-separated list, tried in order. Preferred.
+ *   SEPOLIA_RPC_URL   — single URL, used as the first upstream if set.
+ *   Defaults          — PublicNode, dRPC, Ankr, sepolia.org (all key-less).
  */
 
-const UPSTREAM_URL =
-  process.env.SEPOLIA_RPC_URL ?? process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL ?? "";
+const DEFAULT_UPSTREAMS = [
+  "https://ethereum-sepolia-rpc.publicnode.com",
+  "https://sepolia.drpc.org",
+  "https://rpc.ankr.com/eth_sepolia",
+  "https://rpc.sepolia.org",
+];
 
-// Explicit methods that are always blocked. Most of these would fail upstream
-// anyway (Infura doesn't hold keys), but blocking them here is cheaper and
-// makes the policy explicit.
+function resolveUpstreams(): string[] {
+  const list = process.env.SEPOLIA_RPC_URLS;
+  if (list && list.trim().length > 0) {
+    return list
+      .split(",")
+      .map((u) => u.trim())
+      .filter(Boolean);
+  }
+  const single =
+    process.env.SEPOLIA_RPC_URL ?? process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL;
+  if (single && single.trim().length > 0) {
+    // Put the configured keyed provider first, public fallbacks after.
+    return [single.trim(), ...DEFAULT_UPSTREAMS];
+  }
+  return DEFAULT_UPSTREAMS;
+}
+
+const UPSTREAMS = resolveUpstreams();
+
+// Denylist: only block things that would be genuinely harmful. Everything
+// else (including methods viem may add in future versions) is forwarded.
 const BLOCKED_METHODS = new Set<string>([
-  // Signing / wallet — no server-side wallet exists.
   "eth_sendTransaction",
   "eth_sign",
   "eth_signTransaction",
@@ -57,7 +74,6 @@ const BLOCKED_METHODS = new Set<string>([
   "personal_ecRecover",
   "personal_unlockAccount",
   "personal_importRawKey",
-  // Wallet RPCs live in the user's wallet, not in a provider.
   "wallet_addEthereumChain",
   "wallet_switchEthereumChain",
   "wallet_watchAsset",
@@ -65,16 +81,14 @@ const BLOCKED_METHODS = new Set<string>([
   "wallet_getPermissions",
 ]);
 
-// Prefixes for whole method families that are expensive or privileged.
-// Anything starting with one of these is rejected.
 const BLOCKED_PREFIXES = ["debug_", "trace_", "admin_", "miner_", "txpool_"];
 
-// 256 KB is plenty for any legit JSON-RPC call (even a fat eth_getLogs).
 const MAX_BODY_BYTES = 256 * 1024;
 
-// Slightly below maxDuration so we respond with a proper JSON-RPC error
-// rather than Vercel's 504 page when upstream is slow.
-const UPSTREAM_TIMEOUT_MS = 25_000;
+// Per-upstream timeout. We try up to UPSTREAMS.length providers, so this must
+// be short enough that even the worst case (all fail) stays under maxDuration.
+// With 4 upstreams and maxDuration=30s we budget 6s per attempt with headroom.
+const PER_UPSTREAM_TIMEOUT_MS = 6_000;
 
 type JsonRpcRequest = {
   jsonrpc?: string;
@@ -103,7 +117,11 @@ function methodBlocked(method: string): boolean {
   return false;
 }
 
-function screenCall(call: unknown): { ok: true } | { ok: false; method: string; id: number | string | null } {
+function screenCall(
+  call: unknown
+):
+  | { ok: true }
+  | { ok: false; method: string; id: number | string | null } {
   if (!call || typeof call !== "object") {
     return { ok: false, method: "invalid", id: null };
   }
@@ -118,8 +136,64 @@ function screenCall(call: unknown): { ok: true } | { ok: false; method: string; 
   return { ok: true };
 }
 
+/**
+ * POST to one upstream with a short timeout. Returns the upstream response
+ * (and body text) on success, or `null` if this upstream failed in a way we
+ * should fall through on (5xx, 429, network error, timeout). A 4xx that
+ * isn't 429 is considered "real" — we return it instead of falling through.
+ */
+async function callUpstream(
+  url: string,
+  raw: string
+): Promise<{ status: number; body: string; contentType: string } | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(
+    () => controller.abort(),
+    PER_UPSTREAM_TIMEOUT_MS
+  );
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json",
+      },
+      body: raw,
+      signal: controller.signal,
+      cache: "no-store",
+    });
+    const body = await res.text();
+    // 429 and 5xx are "try the next upstream" signals. Everything else is
+    // a real response that we should return as-is (including regular
+    // JSON-RPC errors embedded in a 200).
+    if (res.status === 429 || res.status >= 500) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[rpc] upstream ${new URL(url).host} returned ${res.status}, falling through`
+      );
+      return null;
+    }
+    return {
+      status: res.status,
+      body,
+      contentType: res.headers.get("content-type") ?? "application/json",
+    };
+  } catch (err) {
+    const aborted =
+      err instanceof Error &&
+      (err.name === "AbortError" || err.message.includes("aborted"));
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[rpc] upstream ${new URL(url).host} failed (${aborted ? "timeout" : "network"}), falling through`
+    );
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function POST(req: NextRequest) {
-  if (!UPSTREAM_URL) {
+  if (UPSTREAMS.length === 0) {
     return NextResponse.json(
       rpcError(null, -32603, "RPC proxy is not configured on the server."),
       { status: 500 }
@@ -158,29 +232,30 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Screen every call. If any are blocked, respond in the SAME shape as the
-  // incoming request — batch input gets a batch-shaped response with one
-  // entry per call, singular input gets a singular response. Returning a
-  // singular error for a batched request was what caused viem's transport
-  // to read `undefined` from response slots and crash with
-  // "Cannot read properties of undefined (reading 'map')".
-  const errors: { index: number; id: number | string | null; method: string }[] = [];
+  // Screen methods. If any are blocked, return a shape-preserving rejection
+  // (batch-in → batch-out, singular-in → singular-out) so viem's transport
+  // never reads `undefined` from a missing response slot.
+  const blocked: {
+    index: number;
+    id: number | string | null;
+    method: string;
+  }[] = [];
   calls.forEach((call, index) => {
     const screened = screenCall(call);
     if (!screened.ok) {
-      errors.push({ index, id: screened.id, method: screened.method });
+      blocked.push({ index, id: screened.id, method: screened.method });
     }
   });
 
-  if (errors.length > 0) {
+  if (blocked.length > 0) {
     // eslint-disable-next-line no-console
     console.warn(
       "[rpc] blocked methods:",
-      errors.map((e) => e.method).join(", ")
+      blocked.map((e) => e.method).join(", ")
     );
     if (isBatch) {
       const payload = calls.map((call, index) => {
-        const err = errors.find((e) => e.index === index);
+        const err = blocked.find((e) => e.index === index);
         if (err) {
           return rpcError(
             err.id,
@@ -188,9 +263,6 @@ export async function POST(req: NextRequest) {
             `Method not allowed via proxy: ${err.method}`
           );
         }
-        // For calls in the batch that would have succeeded, return a
-        // benign null result; the whole batch is being rejected, but at
-        // least the shape viem expects is preserved.
         const c = call as JsonRpcRequest;
         return { jsonrpc: "2.0", id: c.id ?? null, result: null };
       });
@@ -198,52 +270,37 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json(
       rpcError(
-        errors[0].id,
+        blocked[0].id,
         -32601,
-        `Method not allowed via proxy: ${errors[0].method}`
+        `Method not allowed via proxy: ${blocked[0].method}`
       ),
       { status: 400 }
     );
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
-
-  try {
-    const upstream = await fetch(UPSTREAM_URL, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        accept: "application/json",
-      },
-      body: raw,
-      signal: controller.signal,
-      cache: "no-store",
-    });
-
-    const text = await upstream.text();
-
-    // Propagate upstream status (incl. 429) so react-query backs off naturally
-    // instead of hammering. Strip headers that leak the upstream identity.
-    return new NextResponse(text, {
-      status: upstream.status,
-      headers: {
-        "content-type":
-          upstream.headers.get("content-type") ?? "application/json",
-        "cache-control": "no-store",
-      },
-    });
-  } catch (err) {
-    const aborted =
-      err instanceof Error &&
-      (err.name === "AbortError" || err.message.includes("aborted"));
-    return NextResponse.json(
-      rpcError(null, -32603, aborted ? "Upstream timeout." : "Upstream error."),
-      { status: 502 }
-    );
-  } finally {
-    clearTimeout(timeout);
+  // Try each upstream in order. First one that answers with something other
+  // than 429/5xx/timeout wins.
+  for (const url of UPSTREAMS) {
+    const result = await callUpstream(url, raw);
+    if (result) {
+      return new NextResponse(result.body, {
+        status: result.status,
+        headers: {
+          "content-type": result.contentType,
+          "cache-control": "no-store",
+        },
+      });
+    }
   }
+
+  // All upstreams failed. Return a clean JSON-RPC error so viem doesn't
+  // crash trying to parse an HTML error page.
+  // eslint-disable-next-line no-console
+  console.error("[rpc] all upstreams failed");
+  return NextResponse.json(
+    rpcError(null, -32603, "All upstreams unavailable."),
+    { status: 502 }
+  );
 }
 
 export async function GET() {

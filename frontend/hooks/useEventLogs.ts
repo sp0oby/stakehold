@@ -22,12 +22,14 @@ import type { Abi, Log } from "viem";
  *   a few chunked calls.
  */
 
-// Infura's documented max range per eth_getLogs call on most tiers.
+// Most free RPCs cap eth_getLogs at 10k blocks per call.
 const CHUNK_SIZE = 9_999n;
-// How far back the chunked fallback looks. ~500k Sepolia blocks is
-// roughly ten weeks — plenty for any property in this preview and keeps
-// the worst-case scan to ~50 chunked calls instead of 120.
+// How far back the chunked fallback looks. ~500k Sepolia blocks is roughly
+// ten weeks — plenty for any property in this preview.
 const FALLBACK_LOOKBACK = 500_000n;
+// Chunks to run concurrently. 5 keeps the proxy warm without hammering any
+// single upstream hard enough to get rate-limited.
+const CHUNK_CONCURRENCY = 5;
 
 export function useEventLogs(
   address: `0x${string}` | undefined,
@@ -87,29 +89,42 @@ export function useEventLogs(
         const earliest =
           head > FALLBACK_LOOKBACK ? head - FALLBACK_LOOKBACK : 0n;
 
-        const collected: Log[] = [];
+        // Build the full chunk list up-front so we can run them with
+        // bounded concurrency. Serial scanning of 50 chunks was taking
+        // 15-25s on prod; 5-way concurrency cuts that to ~3-5s.
+        const ranges: { from: bigint; to: bigint }[] = [];
         for (let from = earliest; from <= head; from += CHUNK_SIZE + 1n) {
-          if (cancelled) return;
           const to = from + CHUNK_SIZE > head ? head : from + CHUNK_SIZE;
-          try {
-            const chunk = await client.getLogs({
-              address,
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              event: event as any,
-              fromBlock: from,
-              toBlock: to,
-            });
-            if (Array.isArray(chunk)) {
-              collected.push(...(chunk as Log[]));
-            }
-          } catch (chunkErr) {
-            // One bad chunk shouldn't kill the whole scan — log and move on.
-            // eslint-disable-next-line no-console
-            console.warn(
-              `[useEventLogs:${eventName}] chunk ${from}-${to} failed`,
-              chunkErr
-            );
-          }
+          ranges.push({ from, to });
+        }
+
+        const collected: Log[] = [];
+        for (let i = 0; i < ranges.length; i += CHUNK_CONCURRENCY) {
+          if (cancelled) return;
+          const batch = ranges.slice(i, i + CHUNK_CONCURRENCY);
+          const results = await Promise.all(
+            batch.map(async ({ from, to }) => {
+              try {
+                const chunk = await client.getLogs({
+                  address,
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  event: event as any,
+                  fromBlock: from,
+                  toBlock: to,
+                });
+                return Array.isArray(chunk) ? (chunk as Log[]) : [];
+              } catch (chunkErr) {
+                // One bad chunk shouldn't kill the scan — log and continue.
+                // eslint-disable-next-line no-console
+                console.warn(
+                  `[useEventLogs:${eventName}] chunk ${from}-${to} failed`,
+                  chunkErr
+                );
+                return [] as Log[];
+              }
+            })
+          );
+          for (const got of results) collected.push(...got);
         }
         if (!cancelled) setLogs(collected);
       } catch (fatal) {
