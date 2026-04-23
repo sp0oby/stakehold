@@ -19,11 +19,14 @@ export const dynamic = "force-dynamic";
  *
  * Hardening:
  *   - Only POST is accepted (JSON-RPC over HTTP is POST).
- *   - Method allowlist: only read methods + raw tx broadcast are forwarded.
- *     Wallet / admin methods (eth_accounts, eth_sendTransaction, personal_*,
- *     debug_*, etc.) are rejected. The user's wallet handles signing locally.
- *   - Batch requests are supported but every entry in the batch must pass the
- *     allowlist, otherwise the whole batch is rejected.
+ *   - Method DENYLIST: wallet/signing and expensive debug/trace methods are
+ *     rejected. Everything else (all standard read methods, plus niche ones
+ *     like eth_getProof that future viem versions may call) is forwarded.
+ *     We prefer a denylist over an allowlist because viem/wagmi expand the
+ *     set of methods they use between versions, and a tight allowlist breaks
+ *     the UI without actually improving security — Infura doesn't have a
+ *     wallet, so most "dangerous" methods would fail upstream anyway.
+ *   - Batch requests are supported; every entry in the batch is screened.
  *   - Body size cap prevents log-query DoS.
  *   - Short upstream timeout so a slow provider can't pin a function instance.
  */
@@ -31,34 +34,37 @@ export const dynamic = "force-dynamic";
 const UPSTREAM_URL =
   process.env.SEPOLIA_RPC_URL ?? process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL ?? "";
 
-// Methods we allow the browser to invoke via the proxy. Anything not on this
-// list is rejected with a JSON-RPC error — including signing and admin calls.
-const ALLOWED_METHODS = new Set<string>([
-  "eth_chainId",
-  "eth_blockNumber",
-  "eth_getBlockByNumber",
-  "eth_getBlockByHash",
-  "eth_getBalance",
-  "eth_getCode",
-  "eth_getStorageAt",
-  "eth_getTransactionByHash",
-  "eth_getTransactionReceipt",
-  "eth_getTransactionCount",
-  "eth_getLogs",
-  "eth_call",
-  "eth_estimateGas",
-  "eth_gasPrice",
-  "eth_feeHistory",
-  "eth_maxPriorityFeePerGas",
-  "eth_sendRawTransaction",
-  "eth_syncing",
-  "net_version",
-  "net_listening",
-  "web3_clientVersion",
+// Explicit methods that are always blocked. Most of these would fail upstream
+// anyway (Infura doesn't hold keys), but blocking them here is cheaper and
+// makes the policy explicit.
+const BLOCKED_METHODS = new Set<string>([
+  // Signing / wallet — no server-side wallet exists.
+  "eth_sendTransaction",
+  "eth_sign",
+  "eth_signTransaction",
+  "eth_signTypedData",
+  "eth_signTypedData_v1",
+  "eth_signTypedData_v3",
+  "eth_signTypedData_v4",
+  "eth_accounts",
+  "eth_requestAccounts",
+  "personal_sign",
+  "personal_ecRecover",
+  "personal_unlockAccount",
+  "personal_importRawKey",
+  // Wallet RPCs live in the user's wallet, not in a provider.
+  "wallet_addEthereumChain",
+  "wallet_switchEthereumChain",
+  "wallet_watchAsset",
+  "wallet_requestPermissions",
+  "wallet_getPermissions",
 ]);
 
+// Prefixes for whole method families that are expensive or privileged.
+// Anything starting with one of these is rejected.
+const BLOCKED_PREFIXES = ["debug_", "trace_", "admin_", "miner_", "txpool_"];
+
 // 256 KB is plenty for any legit JSON-RPC call (even a fat eth_getLogs).
-// Anything larger is almost certainly abuse.
 const MAX_BODY_BYTES = 256 * 1024;
 
 // Keep upstream calls snappy so we don't hold a serverless instance open.
@@ -71,7 +77,11 @@ type JsonRpcRequest = {
   params?: unknown;
 };
 
-function rpcError(id: number | string | null | undefined, code: number, message: string) {
+function rpcError(
+  id: number | string | null | undefined,
+  code: number,
+  message: string
+) {
   return {
     jsonrpc: "2.0",
     id: id ?? null,
@@ -79,10 +89,27 @@ function rpcError(id: number | string | null | undefined, code: number, message:
   };
 }
 
-function methodAllowed(call: unknown): call is JsonRpcRequest {
-  if (!call || typeof call !== "object") return false;
+function methodBlocked(method: string): boolean {
+  if (BLOCKED_METHODS.has(method)) return true;
+  for (const prefix of BLOCKED_PREFIXES) {
+    if (method.startsWith(prefix)) return true;
+  }
+  return false;
+}
+
+function screenCall(call: unknown): { ok: true } | { ok: false; method: string; id: number | string | null } {
+  if (!call || typeof call !== "object") {
+    return { ok: false, method: "invalid", id: null };
+  }
   const method = (call as JsonRpcRequest).method;
-  return typeof method === "string" && ALLOWED_METHODS.has(method);
+  const id = (call as JsonRpcRequest).id ?? null;
+  if (typeof method !== "string") {
+    return { ok: false, method: "invalid", id };
+  }
+  if (methodBlocked(method)) {
+    return { ok: false, method, id };
+  }
+  return { ok: true };
 }
 
 export async function POST(req: NextRequest) {
@@ -93,7 +120,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Cheap size guard before we even parse JSON.
+  // Cheap size guard before parsing.
   const lenHeader = req.headers.get("content-length");
   if (lenHeader && Number(lenHeader) > MAX_BODY_BYTES) {
     return NextResponse.json(rpcError(null, -32600, "Request too large."), {
@@ -125,11 +152,17 @@ export async function POST(req: NextRequest) {
   }
 
   for (const call of calls) {
-    if (!methodAllowed(call)) {
-      const id = (call as JsonRpcRequest)?.id ?? null;
-      const method = (call as JsonRpcRequest)?.method ?? "unknown";
+    const screened = screenCall(call);
+    if (!screened.ok) {
+      // Log to Vercel function output so we can see what got rejected.
+      // eslint-disable-next-line no-console
+      console.warn("[rpc] blocked method:", screened.method);
       return NextResponse.json(
-        rpcError(id, -32601, `Method not allowed via proxy: ${method}`),
+        rpcError(
+          screened.id,
+          -32601,
+          `Method not allowed via proxy: ${screened.method}`
+        ),
         { status: 400 }
       );
     }
@@ -152,9 +185,8 @@ export async function POST(req: NextRequest) {
 
     const text = await upstream.text();
 
-    // If upstream rate-limits us, propagate it so react-query backs off
-    // instead of hammering. We still strip any Retry-After that leaks the
-    // upstream identity.
+    // Propagate upstream status (incl. 429) so react-query backs off naturally
+    // instead of hammering. Strip headers that leak the upstream identity.
     return new NextResponse(text, {
       status: upstream.status,
       headers: {
@@ -165,7 +197,8 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     const aborted =
-      err instanceof Error && (err.name === "AbortError" || err.message.includes("aborted"));
+      err instanceof Error &&
+      (err.name === "AbortError" || err.message.includes("aborted"));
     return NextResponse.json(
       rpcError(null, -32603, aborted ? "Upstream timeout." : "Upstream error."),
       { status: 502 }
@@ -175,9 +208,8 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Block other verbs — browsers sometimes send OPTIONS preflights; same-origin
-// fetches from the app don't need CORS, and we don't want to whitelist other
-// origins to this proxy.
 export async function GET() {
-  return NextResponse.json(rpcError(null, -32600, "Use POST."), { status: 405 });
+  return NextResponse.json(rpcError(null, -32600, "Use POST."), {
+    status: 405,
+  });
 }
