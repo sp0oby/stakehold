@@ -14,6 +14,17 @@ export function formatEth(value: bigint | undefined, maxDecimals = 4): string {
 export function formatUsd(value: bigint | undefined): string {
   if (value === undefined) return "—";
   const whole = Number(formatUnits(value, 6));
+  // Switch to compact notation ($2.1M, $2B) past a million so the
+  // property-value stat card doesn't blow out of its grid cell on
+  // high-value listings. Small values keep full precision.
+  if (whole >= 1_000_000) {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      notation: "compact",
+      maximumFractionDigits: 2,
+    }).format(whole);
+  }
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",

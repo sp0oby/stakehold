@@ -57,10 +57,13 @@ export const wagmiConfig = getDefaultConfig({
   projectId: projectId ?? "stub-for-local-dev",
   chains: [sepolia],
   transports: {
-    // Generous batch window so react-query bursts collapse into one upstream
-    // request instead of N. Cuts Infura call volume ~5-10x on busy tabs.
+    // Batch simultaneous reads into a single upstream request — cuts call
+    // volume ~5-10x on busy tabs. `batchSize: 20` keeps any individual batch
+    // small enough that one slow call (e.g. a wide eth_getLogs) can't push
+    // the whole batch past the serverless function timeout; `wait: 16` is
+    // short enough that the user never perceives the delay.
     [sepolia.id]: http(rpcUrl, {
-      batch: { wait: 16 },
+      batch: { wait: 16, batchSize: 20 },
     }),
   },
   ssr: true,

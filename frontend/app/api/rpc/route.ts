@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// Bump the Vercel function duration past the Hobby-plan default of 10s —
+// eth_getLogs over wide ranges routinely takes 12-20s to come back from
+// Infura, and if the function is killed mid-request the browser sees a
+// timeout and silently renders empty state. 30s is the Hobby-plan cap.
+export const maxDuration = 30;
 
 /**
  * Server-side JSON-RPC proxy.
@@ -67,8 +72,9 @@ const BLOCKED_PREFIXES = ["debug_", "trace_", "admin_", "miner_", "txpool_"];
 // 256 KB is plenty for any legit JSON-RPC call (even a fat eth_getLogs).
 const MAX_BODY_BYTES = 256 * 1024;
 
-// Keep upstream calls snappy so we don't hold a serverless instance open.
-const UPSTREAM_TIMEOUT_MS = 15_000;
+// Slightly below maxDuration so we respond with a proper JSON-RPC error
+// rather than Vercel's 504 page when upstream is slow.
+const UPSTREAM_TIMEOUT_MS = 25_000;
 
 type JsonRpcRequest = {
   jsonrpc?: string;
