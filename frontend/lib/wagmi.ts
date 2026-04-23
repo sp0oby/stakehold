@@ -42,19 +42,26 @@ function resolveRpcUrl(): string | undefined {
 
 const rpcUrl = resolveRpcUrl();
 
+/**
+ * NOTE: Do not import this module from anywhere that might run during SSR.
+ * `getDefaultConfig` touches `indexedDB` at evaluation time (via WalletConnect
+ * storage), so it MUST stay client-only. The only legitimate importer is
+ * `app/providers-client.tsx`, which is dynamic-imported with `ssr: false`.
+ *
+ * If you just need the chain constant (e.g. for a switch-network CTA), import
+ * `targetChain` from `@/lib/chain` instead — that module has no web3 side
+ * effects and is safe to import from anywhere.
+ */
 export const wagmiConfig = getDefaultConfig({
   appName: "Stakehold",
   projectId: projectId ?? "stub-for-local-dev",
   chains: [sepolia],
   transports: {
-    // Use a generous batch window so react-query bursts collapse into one
-    // upstream request instead of N. Cuts Infura call volume roughly 5–10x
-    // on a busy dashboard tab.
+    // Generous batch window so react-query bursts collapse into one upstream
+    // request instead of N. Cuts Infura call volume ~5-10x on busy tabs.
     [sepolia.id]: http(rpcUrl, {
       batch: { wait: 16 },
     }),
   },
   ssr: true,
 });
-
-export const targetChain = sepolia;

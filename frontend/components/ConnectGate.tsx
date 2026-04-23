@@ -2,7 +2,7 @@
 
 import { useAccount, useSwitchChain } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { targetChain } from "@/lib/wagmi";
+import { targetChain } from "@/lib/chain";
 import { Spinner } from "./Spinner";
 import { toast } from "sonner";
 
