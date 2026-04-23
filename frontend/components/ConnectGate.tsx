@@ -11,7 +11,7 @@ import { toast } from "sonner";
  * ethskills/frontend-ux: a single button location that morphs through
  *
  *   [Not connected]  → Connect Wallet
- *   [Wrong network]  → Switch to Sepolia
+ *   [Wrong network]  → Switch network
  *   [Ready]          → renders children (the actual action button)
  *
  * Rendering the network-switch CTA in the page (not just the header
@@ -54,7 +54,7 @@ export function ConnectGate({ children }: { children: React.ReactNode }) {
         disabled={isSwitching}
       >
         {isSwitching && <Spinner />}
-        Switch to Sepolia
+        Switch network
       </button>
     );
   }

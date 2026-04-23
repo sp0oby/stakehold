@@ -7,7 +7,7 @@ import type { Abi, Log } from "viem";
 /**
  * Light-weight event log scanner. Pulls *all* historical logs of a given
  * event from the supplied contract's genesis block. Sufficient for current
- * Sepolia volume; at scale this would be a subgraph or Ponder indexer.
+ * Early-stage traffic volume; at scale this would be a subgraph or Ponder indexer.
  */
 export function useEventLogs(
   address: `0x${string}` | undefined,

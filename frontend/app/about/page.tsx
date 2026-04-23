@@ -116,8 +116,8 @@ export default function AboutPage() {
             title="Get started"
             steps={[
               "Install MetaMask, Rainbow, or any EVM wallet.",
-              "Switch the wallet to the Sepolia testnet.",
-              "Grab free test ETH from a Sepolia faucet — you'll need about 0.05 ETH to cover gas for a full round of interactions.",
+              "Switch the wallet to the preview test network the app is deployed on.",
+              "Grab free test ETH from a public test faucet — you’ll need a little to cover a full round of interactions.",
               "Open the app and click Connect. That's it.",
             ]}
           />
@@ -249,7 +249,7 @@ export default function AboutPage() {
       <section className="card bg-gradient-to-br from-accent/10 to-accent/5 border-accent/25">
         <h2 className="text-xl font-bold">Try it yourself</h2>
         <p className="text-fg-muted mt-2 max-w-lg">
-          Connect a Sepolia-funded wallet, browse the properties on the
+          Connect a test-funded wallet, browse the properties on the
           platform, or launch one of your own. The whole round-trip takes a
           few minutes.
         </p>
@@ -266,7 +266,7 @@ export default function AboutPage() {
             rel="noreferrer"
             className="btn-secondary"
           >
-            Get Sepolia ETH ↗
+            Get test ETH ↗
           </a>
         </div>
       </section>

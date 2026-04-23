@@ -17,8 +17,7 @@ type Props = {
 
 /**
  * A button that:
- *   - Sits behind the ConnectGate (so it only ever fires when wallet is
- *     connected to Sepolia).
+ *   - Sits behind the ConnectGate (so it only ever fires on the right network).
  *   - Shows an INLINE spinner next to its label instead of replacing the
  *     label with className="loading" (ethskills frontend-ux Rule 1).
  *   - Uses per-action pending flags, not a global `isLoading`.

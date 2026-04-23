@@ -60,7 +60,7 @@ export function Footer() {
               label: "Legal considerations",
               external: true,
             },
-            { href: "https://sepoliafaucet.com/", label: "Sepolia faucet", external: true },
+            { href: "https://sepoliafaucet.com/", label: "Get test ETH", external: true },
           ]}
         />
       </div>
@@ -71,9 +71,9 @@ export function Footer() {
             © {new Date().getFullYear()} {BRAND.name}. Open-source software.
           </p>
           <p className="max-w-xl md:text-right">
-            <strong className="text-fg-muted/90">Testnet only.</strong>{" "}
-            Running on Ethereum Sepolia. Shares represent synthetic ownership of a
-            test property — not legal title, not investment advice.
+            <strong className="text-fg-muted/90">Preview only.</strong>{" "}
+            Running on a public test network. Shares represent demo ownership of
+            a sample property — not legal title, not investment advice.
           </p>
         </div>
       </div>

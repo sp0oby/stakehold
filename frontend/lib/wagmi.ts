@@ -15,9 +15,8 @@ if (!projectId) {
 
 const rpc = process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL;
 
-// Sepolia ONLY — this app cannot misbehave on mainnet because mainnet is
-// simply not in the chain list. The Connect button's "Switch to Sepolia"
-// dropdown picks up on any other current chain.
+// Single-chain app — only the configured preview testnet is in the list, so
+// the wallet cannot accidentally talk to mainnet. Wrong-network = switch CTA.
 export const wagmiConfig = getDefaultConfig({
   appName: "Stakehold",
   projectId: projectId ?? "stub-for-local-dev",

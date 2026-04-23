@@ -19,7 +19,7 @@ export function AddressPill({
   explorerBase = "https://sepolia.etherscan.io",
   showFull = false,
 }: Props) {
-  // ENS lookup always happens on mainnet — Sepolia doesn't have ENS reverse.
+  // ENS reverse lookup is a mainnet feature — not available on public testnets.
   const { data: ens } = useEnsName({ address, chainId: mainnet.id });
   const [copied, setCopied] = useState(false);
 

@@ -55,7 +55,7 @@ export function useIsAdmin(
       refetchInterval: 30_000,
       staleTime: 15_000,
     },
-    // pin to Sepolia so stray wallet chain changes don't re-issue these calls
+    // pin to the app chain so stray wallet network switches don't re-issue calls
     // @ts-expect-error wagmi carries chainId down per-call via config spread
     chainId: CHAIN_ID,
   });
