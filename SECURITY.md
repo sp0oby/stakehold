@@ -37,6 +37,8 @@ Please **do not open a public GitHub issue** for vulnerabilities.
 
 Preferred channel: **[GitHub Security Advisories](https://github.com/sp0oby/stakehold/security/advisories/new)** (private, encrypted, tracked alongside the code).
 
+Alternative email: `tedkthebot@gmail.com` if you prefer out-of-band disclosure.
+
 Include, at minimum:
 
 1. A description of the issue and its impact.
